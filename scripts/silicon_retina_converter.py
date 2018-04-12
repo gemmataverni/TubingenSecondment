@@ -11,7 +11,6 @@ Created on Thu Apr  5 13:51:24 2018
 import tiffcapture as tc 
 import numpy as np
 from matplotlib import pyplot as plt
-import random
 
 # =============================================================================
 # LinLog conversion as in the iscas 2012 paper
@@ -143,7 +142,7 @@ def siliconRetinaEventsGenerator(filename,thrP,thrN,ThrLinLog,lintime,frameTimeS
 #     the previosus frame: -1 means OFF event, 1 ON event and 0 any event
 # =============================================================================
 
-def siliconRetinaImagesGenerator(filename,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug):
+def siliconRetinaImagesGenerator_Sync(filename,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug):
 # TODO add refractory period, refresh image, can simulate the refractory 
 # period of the retina, in the DVS is a variable parameter
   
@@ -202,88 +201,8 @@ def siliconRetinaImagesGenerator(filename,thrP,thrN,refPer,ThrLinLog,frameTimeSt
 
     return DVSvideo
 
-def return_xy(index):
-    y=(index//3)-1
-    x=(index%3)-1
-    return x,y
 
-# =============================================================================
-# CREATE JITTER IMAGES
-# =============================================================================
-def jitterImages(filename,numbJitt,debug):
-    tiff = tc.opentiff(filename) #open img
-    tiff_length=tiff.length
-    tiff_shape=tiff.shape
-    print("Number of images:", tiff_length)#number of images
-    print("Image shape:", tiff_shape)#size of images
-    xdim=tiff_shape[0]
-    ydim=tiff_shape[1]
-    
-    frame=3 #numbers of pixels around the image 
-    tiff_new_shape=tiff_shape+2*frame*np.ones(len(tiff_shape), dtype=np.int16)
-    print("Image new shape:", tiff_new_shape)
-    
-    JitterVideo=[]
-    x0=3
-    y0=3
-    num_jitter_images=10#number of jitter images
-    frame=0
-    
-    for img in tiff:
-        c=0
-        mean_value=np.mean(img)
-        jitterImg=np.ones(tiff_new_shape, dtype=np.int16)
-        jitterImg=mean_value*jitterImg
-        
-        while (c<num_jitter_images):
-            
-            idex_value=np.arange(0,9)
-            next_pixel=random.choice(idex_value)
-            x,y=return_xy(next_pixel)
-            x0 += x
-            y0 += y
-            
-            while (x0 < 0)|(x0 >= 6)|(y0 < 0)|(y0 >= 6)|(next_pixel==4):
-                p=np.where(idex_value==next_pixel)
-                idex_value=np.delete(idex_value,p)
-                next_pixel=random.choice(idex_value)
-                x,y=return_xy(next_pixel)
-                x0 += x
-                y0 += y
-            
-#            if debug:
-#                print("x0:",x0)
-#                print("y0:",y0)            
-            
-            jitterImg[x0:x0+xdim, y0:y0+ydim]=img
-            c += 1
-            
-            JitterVideo.append(jitterImg)
-            
-            if debug:
-                plt.figure()
-                plt.imshow(jitterImg)
-                plt.show()
-        
-#        print("Frame number:",frame)
-        frame += 1
-
-    print("Jitter video len:",len(JitterVideo))
-    
-    return JitterVideo
-
-def create_video(filename,data):
-    print("Create video")
-#    size=data[0].shape
-#    writer = cv2.VideoWriter(filename,-1,3000,size)
-    ir=np.arange(50,60)
-    for i in ir:
-        frame=data[i]
-#        writer.write(frame)
-        plt.figure()
-        plt.imshow(frame)
-        plt.show()
-        plt.close()  
+def siliconRetinaImagesGenerator_Async(filename,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug):
     return
 
 # =============================================================================
@@ -309,10 +228,11 @@ def main(datasetpath):
     
     
     EVENT_STREAM_GENERATOR=False
-    EVENT_IMAGES_GENERATOR=False
-    CREATE_JITTER_IMAGES=True
+    EVENT_IMAGES_GENERATOR_SYNC=False
+    EVENT_IMAGES_GENERATOR_ASYNC=True
     
     debug=True
+    
 # =============================================================================
 #    EVENT STREAM GENERATOR
 # =============================================================================
@@ -325,39 +245,28 @@ def main(datasetpath):
         print(test_DVSevents.shape)
     
 # =============================================================================
-#   EVENT IMAGES GENERATOR
+#   EVENT IMAGES GENERATOR SYNCHRONOUS
 # =============================================================================
-    if EVENT_IMAGES_GENERATOR:
+    if EVENT_IMAGES_GENERATOR_SYNC:
         print("CONVERT TIFF VIDEO IN DVS IMAGES")
-        train_DVSimage=siliconRetinaImagesGenerator(train_image_path,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug)
+        train_DVSimage=siliconRetinaImagesGenerator_Sync(train_image_path,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug)
         print("Number of converted images:",len(train_DVSimage))
 
-        test_DVSimage=siliconRetinaImagesGenerator(test_image_path,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug)
+        test_DVSimage=siliconRetinaImagesGenerator_Sync(test_image_path,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug)
+        print("Number of converted images:",len(test_DVSimage))
+
+# =============================================================================
+#   EVENT IMAGES GENERATOR ASYNCHRONOUS
+# =============================================================================
+    if EVENT_IMAGES_GENERATOR_ASYNC:
+        print("CONVERT TIFF VIDEO IN DVS IMAGES")
+        train_DVSimage=siliconRetinaImagesGenerator_Async(train_image_path,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug)
+        print("Number of converted images:",len(train_DVSimage))
+
+        test_DVSimage=siliconRetinaImagesGenerator_Async(test_image_path,thrP,thrN,refPer,ThrLinLog,frameTimeStamp,debug)
         print("Number of converted images:",len(test_DVSimage))
         
-# =============================================================================
-#   CREATE AND SAVE JITTER IMAGES
-# =============================================================================
-    num_of_jitter_images=10
-    if CREATE_JITTER_IMAGES:
-        train_jitterimages_path=datasetpath+"/train_jitter.npy"
-        test_jitterimages_path=datasetpath+"/test_jitter.npy"
-        try: 
-            print("load files")
-            train_jitterimages=np.load(train_jitterimages_path)
-            test_jitterimages=np.load(test_jitterimages_path)
-        except IOError:
-            print("generate jitter files")
-            train_jitterimages=jitterImages(train_image_path,num_of_jitter_images,debug=False)
-            np.save(train_jitterimages_path,train_jitterimages)
-            
-            test_jitterimages=jitterImages(test_image_path,num_of_jitter_images,debug=False)
-            np.save(test_jitterimages_path,test_jitterimages)
-        
-#        create_video(train_jitterimages)
-        videoname=datasetpath+"/test_video_short.avi"
-        create_video(videoname,test_jitterimages)
     
 if __name__ == "__main__":
-    datasetpath='C:/Users/Gemma/Desktop/Tubingen/dataset/movies_for_gemma'
+    datasetpath='C:/Users/Gemma/Desktop/TubingenSecondment/dataset'
     main(datasetpath)
