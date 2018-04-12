@@ -120,7 +120,7 @@ def main(datasetpath):
         
     CREATE_JITTER_IMAGES=False
     CREATE_AVI_FROM_ORIGINAL_IMAGES=False
-    saveAVI=True
+    saveAVI=False
     fps_original=30
 # =============================================================================
 # SAVE ORIGINAL VIDEO AS .AVI        
