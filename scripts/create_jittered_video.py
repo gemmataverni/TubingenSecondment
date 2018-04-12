@@ -13,7 +13,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import random
 import cv2
-
+import data_utils
 
 # =============================================================================
 # UTILITY FUNCTIONS
@@ -23,22 +23,6 @@ def return_xy(index,side_length,jitter):
     y=(index//side_length)-jitter
     x=(index%side_length)-jitter
     return x,y
-
-def create_video(filename,data,fps):
-    print("Create video")
-    size=data[0].shape
-    writer = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'XVID'),fps,size,False)
-    for i in range(len(data)):
-        frame=data[i]+1
-        writer.write(np.uint8(frame))   
-    return
-
-def form_tiff_to_listarray(filename):
-    tiff = tc.opentiff(filename)
-    listarray=[]
-    for img in tiff:
-        listarray.append(img)
-    return listarray
 
 # =============================================================================
 # CREATE JITTERED IMAGES
@@ -114,12 +98,12 @@ def jitterImages(filename,numbJitt,jitter,augmented_border,debug):
 # MAIN
 # =============================================================================
 def main(datasetpath):
-#    datasetpath='C:/Users/Gemma/Desktop/Tubingen/dataset/movies_for_gemma'
+    
     train_image_path=datasetpath+"/train.tiff"
     test_image_path=datasetpath+"/test.tiff"
-        
-    CREATE_JITTER_IMAGES=False
+    
     CREATE_AVI_FROM_ORIGINAL_IMAGES=False
+    CREATE_JITTER_IMAGES=False
     saveAVI=False
     fps_original=30
 # =============================================================================
@@ -127,13 +111,13 @@ def main(datasetpath):
 # =============================================================================
     if CREATE_AVI_FROM_ORIGINAL_IMAGES:
         print("=========CONVERT ORIGINAL TIFF IN AVI=========")
-        train_originalimages=form_tiff_to_listarray(train_image_path)
-        train_originalimages=form_tiff_to_listarray(test_image_path)
+        train_originalimages=data_utils.form_tiff_to_listarray(train_image_path)
+        test_originalimages=data_utils.form_tiff_to_listarray(test_image_path)
         if saveAVI:
-            videoname=datasetpath+"/test_original.avi"
-            create_video(videoname,train_originalimages,fps_original)
             videoname=datasetpath+"/train_original.avi"
-            create_video(videoname,train_originalimages,fps_original)
+            data_utils.create_video(videoname,train_originalimages,fps_original)
+            videoname=datasetpath+"/test_original.avi"
+            data_utils.create_video(videoname,test_originalimages,fps_original)
         
 # =============================================================================
 #   CREATE AND SAVE JITTER IMAGES
@@ -161,9 +145,9 @@ def main(datasetpath):
         if saveAVI:
             print("=========SAVE JITTERED IMAGES=========")
             videoname=datasetpath+"/test_video_jitter_step"+str(jitter)+".avi"
-            create_video(videoname,test_jitterimages,fps)
+            data_utils.create_video(videoname,test_jitterimages,fps)
             videoname=datasetpath+"/train_video_jitter_step"+str(jitter)+".avi"
-            create_video(videoname,train_jitterimages,fps)
+            data_utils.create_video(videoname,train_jitterimages,fps)
     
 if __name__ == "__main__":
     datasetpath='C:/Users/Gemma/Desktop/TubingenSecondment/dataset'
