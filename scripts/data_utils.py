@@ -42,6 +42,15 @@ def create_video(filename,data,fps):
         writer.write(np.uint8(frame))   
     return
 
+def create_DVSvideo(filename,data,fps):
+    print("Create video")
+    size=data[0].shape
+    writer = cv2.VideoWriter(filename,cv2.VideoWriter_fourcc(*'XVID'),fps,size,False)
+    for i in range(len(data)):
+        frame=(data[i]+1)*(256/2)
+        writer.write(np.uint8(frame))   
+    return
+
 # =============================================================================
 # PLOT FUNCTION
 # =============================================================================
@@ -58,12 +67,10 @@ def print_subplot_frame_from_two_listarray(array1,title1,array2,title2,num_of_fr
         plt.subplot(121)
         plt.imshow(array1[i])
         plt.title(title1)
-        plt.clim(-1,1)
         plt.colorbar()
         plt.subplot(122)
         plt.title(title2)
         plt.imshow(array2[i])
-        plt.clim(-1,1)
         plt.colorbar()
     return
 
