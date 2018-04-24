@@ -113,4 +113,9 @@ def main():
         
     
 if __name__ == "__main__":
+<<<<<<< HEAD:scripts/DVSimages_converter.py.py
     main()
+=======
+    datasetpath='C:/Users/Gemma/Desktop/TubingenSecondment/dataset'
+    main(datasetpath)
+>>>>>>> c8dc5952e396c5a4ff7c35b5eb743ca6873117b3:scripts/DVSimages_converter.py
